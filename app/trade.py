@@ -25,10 +25,11 @@ price = {'voice': {'volume': 50}, 'data': {'volume': 1}}
 count = 7
 
 #получение номера телефона и токена
-phone, token = auth.getToken(default_phone, default_token)
+phone, token = auth.get_token(default_phone, default_token)
 
 print('Trading is trarted')
 print('Trade: ', phone)
+
 
 def main():
     while True:
@@ -40,7 +41,7 @@ def main():
         amount = math.ceil(volume * 0.8) if data_type == 'voice' else math.ceil(volume * 15)
 
         for _ in range(count):
-            lots.createLot(phone, token, amount, volume, emoji_list, show_name_list, params[data_type])
+            lots.create_lot(phone, token, amount, volume, emoji_list, show_name_list, params[data_type])
 
         # ожидание
         wait_time = random.randint(180,250)
@@ -48,7 +49,6 @@ def main():
         print("Waiting {} seconds".format(str(wait_time)))
 
         time.sleep(wait_time)
-
 
 
 if __name__ == '__main__':

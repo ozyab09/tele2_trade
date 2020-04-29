@@ -3,46 +3,51 @@ import json
 import time
 import random
 
-def createLot(phone, token, amount, volume, emoji_list, show_name_list, params):
+from client import tele2_client
 
-    headers = {"Authorization": "Bearer {}".format(token)}
-    data = {'volume': {'value': str(volume), 'uom': params['uom']}, 'cost':{'amount': str(amount), 'currency': 'rub'}, 'trafficType': params['trafficType']}
 
-    print('Creating new voice lot: volume {}, amount {}'.format(volume, amount), end ='   ')
-
-    r = requests.put("https://msk.tele2.ru/api/subscribers/{}/exchange/lots/created".format(phone), headers=headers, data=json.dumps(data))
-
-    print(r.status_code, end=" ")
-
-    response = json.loads(r.text)
-
-    if r.status_code != 200:
-        print("Cannot create new lot: ", response)
+def create_lot(phone, token, amount, volume, emoji_list, show_name_list,
+               params):
+    print('Creating new voice lot: volume {}, amount {}'.format(volume, amount),
+          end='   ')
+    try:
+        lot = tele2_client.create_lot(phone=phone, token=token, volume=volume,
+                                      uom=params['uom'], amount=amount,
+                                      traffic_type=params['trafficType'])
+    except requests.RequestException:
+        print("Cannot create new lot")
         exit(0)
 
     time.sleep(1)
 
-    id = response['data']['id']
-    emoji = [random.choice(emoji_list), random.choice(emoji_list), random.choice(emoji_list)]
+    id = lot['data']['id']
+    emoji = [random.choice(emoji_list), random.choice(emoji_list),
+             random.choice(emoji_list)]
 
-    #add name and emoji
-    data = {'showSellerName': random.choice(show_name_list), 'emojis': [emoji[0],emoji[1], emoji[2]],'cost':{'amount':str(amount), 'currency': 'rub'}}
+    # add name and emoji
+    data = {'showSellerName': random.choice(show_name_list),
+            'emojis': [emoji[0], emoji[1], emoji[2]],
+            'cost': {'amount': str(amount), 'currency': 'rub'}}
 
     print(' '.join(s for s in emoji))
 
     r = requests.patch("https://msk.tele2.ru/api/subscribers/{}/exchange/lots/created/{}".format(phone, id), headers=headers, data=json.dumps(data))
 
 
-def deleteLot(phone, token, volume, amount, id, uom, trafficType):
-
+def delete_lot(phone, token, volume, amount, id, uom, trafficType):
     headers = {"Authorization": "Bearer {}".format(token)}
-    data = {'volume': {'value': str(volume), 'uom': uom}, 'cost': {'amount': str(amount), 'currency': 'rub'},
+    data = {'volume': {'value': str(volume), 'uom': uom},
+            'cost': {'amount': str(amount), 'currency': 'rub'},
             'trafficType': trafficType}
 
-    print('Deleting lot id: volume {}, amount: {}, id: {}'.format(volume, amount, id), end ='  ')
+    print(
+        'Deleting lot id: volume {}, amount: {}, id: {}'.format(volume, amount,
+                                                                id), end='  ')
 
-    r = requests.delete("https://msk.tele2.ru/api/subscribers/{}/exchange/lots/created/{}".format(phone, id), headers=headers,
-                     data=json.dumps(data))
+    r = requests.delete(
+        "https://msk.tele2.ru/api/subscribers/{}/exchange/lots/created/{}".format(
+            phone, id), headers=headers,
+        data=json.dumps(data))
 
     response = json.loads(r.text)
 
@@ -51,13 +56,14 @@ def deleteLot(phone, token, volume, amount, id, uom, trafficType):
     print(str(r.status_code), response['meta']['status'])
 
 
-def getLots(phone, token):
-
+def get_lots(phone, token):
     headers = {"Authorization": "Bearer {}".format(token)}
 
     print('Fetching current lots..')
 
-    r = requests.get("https://msk.tele2.ru/api/subscribers/{}/exchange/lots/created".format(phone), headers=headers)
+    r = requests.get(
+        "https://msk.tele2.ru/api/subscribers/{}/exchange/lots/created".format(
+            phone), headers=headers)
 
     if r.status_code == 200:
         created_lot = json.loads(r.text)
@@ -74,11 +80,11 @@ def getLots(phone, token):
     return current_lots
 
 def deleteCurrentLots(phone, token):
-
-    current_lots = getLots(phone, token)
+    current_lots = get_lots(phone, token)
 
     print('Found {} lot(s)'.format(str(len(current_lots))))
 
     if len(current_lots) > 0:
         for lot in current_lots:
-            deleteLot(phone, token, lot['volume'], lot['amount'], lot['id'], lot['uom'], lot['trafficType'])
+            delete_lot(phone, token, lot['volume'], lot['amount'], lot['id'],
+                       lot['uom'], lot['trafficType'])
