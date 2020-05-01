@@ -1,5 +1,4 @@
 import requests
-import json
 
 from client import tele2_client
 

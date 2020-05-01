@@ -13,8 +13,6 @@ data_type = "voice" #voice or data
 # список emoji
 emoji_list = ["bomb", "cat", "cool","devil", "rich", "scream","tongue", "zipped"]
 
-# список для показа имени
-show_name_list = ["true", "false"]
 # настроечные параметры для data и voice
 params = {'voice': {'uom': 'min', 'trafficType': 'voice'}, 'data': {'uom': 'gb', 'trafficType': 'data'}}
 
@@ -41,7 +39,7 @@ def main():
         amount = math.ceil(volume * 0.8) if data_type == 'voice' else math.ceil(volume * 15)
 
         for _ in range(count):
-            lots.create_lot(phone, token, amount, volume, emoji_list, show_name_list, params[data_type])
+            lots.create_lot(phone, token, amount, volume, emoji_list, params=params[data_type])
 
         # ожидание
         wait_time = random.randint(180,250)
