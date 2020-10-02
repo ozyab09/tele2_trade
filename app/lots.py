@@ -2,13 +2,14 @@ import requests
 import json
 import time
 import random
+from  datetime import datetime
 
 def createLot(phone, token, amount, volume, emoji_list, show_name_list, params):
 
     headers = {"Authorization": "Bearer {}".format(token)}
     data = {'volume': {'value': str(volume), 'uom': params['uom']}, 'cost':{'amount': str(amount), 'currency': 'rub'}, 'trafficType': params['trafficType']}
 
-    print('Creating new voice lot: volume {}, amount {}'.format(volume, amount), end ='   ')
+    print('Creating new lot: volume {}, amount {}'.format(volume, amount), end ='   ')
 
     r = requests.put("https://msk.tele2.ru/api/subscribers/{}/exchange/lots/created".format(phone), headers=headers, data=json.dumps(data))
 
@@ -17,7 +18,7 @@ def createLot(phone, token, amount, volume, emoji_list, show_name_list, params):
     response = json.loads(r.text)
 
     if r.status_code != 200:
-        print("Cannot create new lot: ", response)
+        print(f"\nCannot create new lot in {datetime.now().time()}:\n{response['meta']['message']}")
         exit(0)
 
     time.sleep(1)
@@ -62,7 +63,7 @@ def getLots(phone, token):
     if r.status_code == 200:
         created_lot = json.loads(r.text)
     else:
-        print(r.status_code)
+        print(r.status_code, r.text)
         exit(0)
 
     current_lots = []
@@ -73,11 +74,15 @@ def getLots(phone, token):
 
     return current_lots
 
-def deleteCurrentLots(phone, token):
+def deleteCurrentLots(phone, token, sale_to_zero):
 
     current_lots = getLots(phone, token)
 
     print('Found {} lot(s)'.format(str(len(current_lots))))
+
+    if sale_to_zero and len(current_lots) == 0:
+        print(f'sale_to_zero is {sale_to_zero} and len(current_lots)={len(current_lots)}, stopping')
+        exit(0)
 
     if len(current_lots) > 0:
         for lot in current_lots:
