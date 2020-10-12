@@ -43,17 +43,17 @@ def main():
             for data_type in vars.types:
                 if vars.types[data_type]:
 
-                    volume = vars.price[data_type]['volume']
+                    volume = int(vars.price[data_type]['volume'])
                     multiplier = vars.price[data_type]['multiplier']
                     amount = math.ceil(volume * multiplier)
-                    count = vars.price[data_type]['count']
+                    count = int(vars.price[data_type]['count'])
 
                     lots.deleteCurrentLots(phone,
                                            token,
                                            data_type,
                                            current_lots)
 
-                    for _ in range(count):
+                    for i in range(count):
                         status = lots.createLot(phone,
                                                 token,
                                                 amount,
@@ -61,6 +61,8 @@ def main():
                                                 vars.price[data_type]['params'])
                         if status != 200:
                             vars.types.update({data_type: False})
+                            logging.info('Check number {}'.format(str(i)))
+                            break
 
                     wait_time = random.randint(60,80)
 

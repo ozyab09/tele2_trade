@@ -7,7 +7,9 @@ import logging
 import vars
 
 def createLot(phone, token, amount, volume, params):
-
+    '''
+    Создание лота вместе со смайлвми
+    '''
     data = {'volume':
                 {'value': str(volume),
                  'uom': params['uom']},
@@ -43,7 +45,9 @@ def createLot(phone, token, amount, volume, params):
     return r.status_code
 
 def deleteLot(phone, token, volume, amount, id, uom, trafficType):
-
+    '''
+    Удаление лота
+    '''
     data = {'volume':
                 {'value': str(volume),
                  'uom': uom},
@@ -56,7 +60,9 @@ def deleteLot(phone, token, volume, amount, id, uom, trafficType):
     getRequest(url_postfix=f'exchange/lots/created/{id}', phone=phone, method='delete', token=token, data=data)
 
 def getLots(phone, token):
-
+    '''
+    Получение списка активных лотов
+    '''
     logging.debug('Fetching current lots..')
     r = getRequest(url_postfix='exchange/lots/created', phone=phone, method='get', token=token)
 
@@ -81,7 +87,10 @@ def getLots(phone, token):
     return current_lots
 
 def deleteCurrentLots(phone, token, data_type, current_lots):
-
+    '''
+    Удаление текущего лота
+    '''
+    logging.debug(f'Deleting {data_type} lots')
     if len(current_lots) > 0:
         for lot in current_lots:
             if data_type == lot['trafficType']:
@@ -89,7 +98,9 @@ def deleteCurrentLots(phone, token, data_type, current_lots):
 
 
 def getBalance (phone, token):
-
+    '''
+    Получение баланса
+    '''
     r = getRequest(url_postfix=f'balance', phone=phone, method='get', token=token)
 
     if r.status_code == 200:
@@ -100,14 +111,23 @@ def getBalance (phone, token):
     return balance
 
 def getRequest(url_postfix, method, phone, token, data=None):
+    '''
+    Функция делает запрос к серверу Tele2 на основе переданных параметров
+
+    :param url_postfix: постфикс, который будет передан в запросе после BASE_URL + phone
+    :param method: выполняемый метод запроса (get, post и т.д.)
+    :param phone: номер телефона
+    :param token: токен
+    :param data: передаваемый данные в виде словаря
+    :return: вернутся данные request
+    '''
 
     BASE_URL = 'https://msk.tele2.ru/api/subscribers'
 
-    headers = {"Authorization": f"Bearer {token}", "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36"}
-
-    if data:
-        req = requests.request(method, f'{BASE_URL}/{phone}/{url_postfix}', headers=headers, data=json.dumps(data))
-    else:
-        req = requests.request(method, f'{BASE_URL}/{phone}/{url_postfix}', headers=headers)
+    headers = {"Authorization": f"Bearer {token}",
+               "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                             "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36"}
+    payload = data or {}
+    req = requests.request(method, f'{BASE_URL}/{phone}/{url_postfix}', headers=headers, data=json.dumps(payload))
 
     return req

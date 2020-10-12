@@ -1,7 +1,9 @@
 import logging
 
 def getToken(default_phone, defaut_token):
-
+    '''
+    Возращает телефон и токен
+    '''
     phone = default_phone
     token = input("Token: ")
 
