@@ -15,21 +15,24 @@ logging.basicConfig(
 default_phone = os.getenv('default_phone') or exit(1)
 default_token = os.getenv('default_token') or ''
 
-#получение номера телефона и токена
-phone, token = auth.getToken(default_phone, default_token)
+# получение номера телефона и токена
+phone, token = auth.get_token(default_phone, default_token)
+
 
 def main():
-    start_balance = previous_balance = lots.getBalance(phone, token)
-    logging.info('Trading is strarted. Current balance: {}'.format(str(start_balance)))
+    start_balance = previous_balance = lots.get_balance(phone, token)
+    logging.info(
+        'Trading is strarted. Current balance: {}'.format(
+            str(start_balance)))
+    lots.get_tariff_packages(phone, token)
 
     while True:
 
-        current_balance = lots.getBalance(phone, token)
+        current_balance = lots.get_balance(phone, token)
         if current_balance != previous_balance:
             logging.warning('Current balance: {}, start balance: {}, different: {}'.format(
-                str(current_balance),
-                str(start_balance),
-                current_balance - start_balance))
+                str(current_balance), str(start_balance), current_balance - start_balance))
+            lots.get_tariff_packages(phone, token)
 
         # for history
         previous_balance = current_balance
@@ -38,7 +41,7 @@ def main():
 
         if vars.types['voice'] or vars.types['data'] or vars.types['sms']:
 
-            current_lots = lots.getLots(phone, token)
+            current_lots = lots.get_lots(phone, token, is_notify=False)
 
             for data_type in vars.types:
                 if vars.types[data_type]:
@@ -48,23 +51,21 @@ def main():
                     amount = math.ceil(volume * multiplier)
                     count = int(vars.price[data_type]['count'])
 
-                    lots.deleteCurrentLots(phone,
-                                           token,
-                                           data_type,
-                                           current_lots)
+                    lots.delete_current_lots(phone,
+                                             token,
+                                             data_type,
+                                             current_lots)
 
                     for i in range(count):
-                        status = lots.createLot(phone,
-                                                token,
-                                                amount,
-                                                volume,
-                                                vars.price[data_type]['params'])
+                        status = lots.create_lot(
+                            phone, token, amount, volume, vars.price[data_type]['params'])
                         if status != 200:
                             vars.types.update({data_type: False})
-                            logging.info('Check number {}'.format(str(i)))
+                            logging.info(
+                                f'Error when try to create new {data_type} lot. Try #{str(i)}')
                             break
 
-                    wait_time = random.randint(60,80)
+                    wait_time = random.randint(80, 120)
 
             logging.debug(f"Waiting {str(wait_time)} seconds")
 
