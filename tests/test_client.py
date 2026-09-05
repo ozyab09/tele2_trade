@@ -90,7 +90,7 @@ def test_error_message_extracted_from_meta(client, monkeypatch):
 
 def test_default_url_is_subscribers():
     client = Tele2Client(phone="p", token="t")
-    assert client.base_url == "https://msk.tele2.ru/api/subscribers"
+    assert client.base_url == "https://msk.t2.ru/api/subscribers"
     assert client.phone == "p"
     assert client.token == "t"
 

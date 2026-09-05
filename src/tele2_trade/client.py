@@ -25,7 +25,7 @@ DEFAULT_USER_AGENT = (
 class Tele2Client:
     """Thin authenticated client for the Tele2 exchange API."""
 
-    def __init__(self, phone: str, token: str, base_url: str = "https://msk.tele2.ru/api/subscribers") -> None:
+    def __init__(self, phone: str, token: str, base_url: str = "https://msk.t2.ru/api/subscribers") -> None:
         self.phone = phone
         self.token = token
         self.base_url = base_url.rstrip("/")

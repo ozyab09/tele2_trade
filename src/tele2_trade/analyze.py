@@ -1,11 +1,11 @@
-"""Market analyzer — tracks how many distinct lots are being offered."""
+"""Market analyzer — polls the Tele2 exchange cost history per traffic type."""
 
 from __future__ import annotations
 
 import json
 import logging
 import time
-from typing import Callable
+from typing import Any, Callable, Collection
 
 import requests
 
@@ -13,43 +13,49 @@ from .client import DEFAULT_USER_AGENT
 
 logger = logging.getLogger(__name__)
 
-MARKET_URL = "https://msk.tele2.ru/api/exchange/lots"
+MARKET_STATS_URL = "https://msk.t2.ru/api/exchange/lots/stats/costs/history"
+DEFAULT_TRAFFIC_TYPES = ("data", "voice", "sms")
 
 
-def _fetch_lot_ids(timeout: float = 30.0) -> list[str]:
-    """Return the distinct lot ids currently listed for sale on the market."""
-    params = {
-        "trafficType": "voice",
-        "volume": "50",
-        "cost": "40",
-        "offset": "0",
-        "limit": "50",
-    }
+def fetch_cost_history(traffic_type: str, timeout: float = 30.0) -> dict:
+    """Return the raw cost history payload for the given traffic type."""
     response = requests.get(
-        MARKET_URL,
-        params=params,
+        MARKET_STATS_URL,
+        params={"trafficType": traffic_type},
         headers={"User-Agent": DEFAULT_USER_AGENT},
         timeout=timeout,
     )
     response.raise_for_status()
-    data = response.json().get("data") or []
-    return [str(item["id"]) for item in data]
+    return response.json()
 
 
-def analyze_market(interval_seconds: float = 1.0, sleeper: Callable[[float], None] = time.sleep) -> None:
-    """Continuously report the number of distinct lots on the market."""
-    seen: set[str] = set()
-    previous_count = 0
+def _history_points(body: Any) -> list:
+    """Best-effort extraction of the cost-history point list from a payload."""
+    if not isinstance(body, dict):
+        return []
+    data = body.get("data")
+    if isinstance(data, list):
+        return data
+    if isinstance(data, dict):
+        for key in ("history", "costs", "points", "items"):
+            if isinstance(data.get(key), list):
+                return data[key]
+    return [data] if data is not None else []
 
+
+def analyze_market(
+    interval_seconds: float = 1.0,
+    sleeper: Callable[[float], None] = time.sleep,
+    traffic_types: Collection[str] = DEFAULT_TRAFFIC_TYPES,
+) -> None:
+    """Continuously report the cost-history size for each traffic type."""
     while True:
-        try:
-            seen.update(_fetch_lot_ids())
-            current_count = len(seen)
-            if current_count != previous_count:
-                previous_count = current_count
-                logger.info("Current distinct lots: %s", current_count)
-        except (requests.RequestException, json.JSONDecodeError):
-            logger.warning("Request failed (timeout or API error)")
+        for traffic_type in traffic_types:
+            try:
+                points = _history_points(fetch_cost_history(traffic_type))
+                logger.info("Cost history %s: %s points", traffic_type, len(points))
+            except (requests.RequestException, json.JSONDecodeError):
+                logger.warning("Cost history request failed for %s (timeout or API error)", traffic_type)
         sleeper(interval_seconds)
 
 
