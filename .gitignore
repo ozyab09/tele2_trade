@@ -1,4 +1,11 @@
-venv/
-sys
 __pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
 .idea/
+.env
+*.log
