@@ -1,0 +1,14 @@
+.git
+.venv
+venv
+__pycache__
+*.py[cod]
+.pytest_cache
+.env
+.coverage
+htmlcov
+img
+tests
+Dockerfile**
+.gitignore
+.github
